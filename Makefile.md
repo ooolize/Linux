@@ -69,10 +69,12 @@ clean:
     rm -rf $(OBJS)
 ```
 加上模式规则
-SOURCES:E=$(wildcard,*c)把当前文件所有c文件放到SOURCES
+SOURCES:E=$(wildcard,*c)//把当前文件所有c文件放到SOURCES
+
 OBJS:=$(patsubst %.c,%.o,$(SOURCES))
 ```
-OBJS:=main.o func.o
+SOURCES:E=$(wildcard,*c)
+OBJS:=$(patsubst %.c,%.o,$(SOURCES))
 ELF:=main
 CC:=gcc //预定义变量
 CFALGS:=-g
