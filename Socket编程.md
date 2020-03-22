@@ -240,11 +240,21 @@ int main(int argc,char*argv[])
             if(FD_ISSET(STDIN_FILENO,&rdst)){
                 bzero(&buf,sizeof(buf));
                 read(STDIN_FILENO,buf,sizeof(buf));
+                if(ret==0){                                                     
+                      printf("byebye\n");
+                      break;
+  
+                  }
                 sendto(socketFd,buf,strlen(buf)-1,0,(struct sockaddr*)&addr,sizeof
             }   
             else if(FD_ISSET(socketFd,&rdst)){
                 bzero(&buf,sizeof(buf));
-                recvfrom(socketFd,buf,sizeof(buf),0,(struct sockaddr*)&addr,&froml
+                recvfrom(socketFd,buf,sizeof(buf),0,(struct sockaddr*)&addr,&fromlen);
+                if(ret==0){
+                      printf("byebye\n");
+                      break;
+  
+                  }
                 printf("%s\n",buf);
             } 
 
