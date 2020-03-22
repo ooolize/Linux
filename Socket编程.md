@@ -13,12 +13,13 @@ int main(int argc,char* argv[]){
   addr.sin_family=AF_INET;
   addr.sin_addr.s_addr=inet_addr(argv[1]);
   
-  int ret=bind(socket,(struct sockaddr*)&addr,sizeof(addr));
-  listen(socket,10);
+  int ret=bind(socketFd,(struct sockaddr*)&addr,sizeof(addr));
+  listen(socketFd,10);
   struct sockaddr client;
   bzero(&client,sizeof(client));
   
-  int newfd=accept(socket,(struct socketaddr*)&client,sizeof(client));
+  socklen_t clientlen=sizeof(client);
+  int newfd=accept(socketFd,(struct socketaddr*)&client,&clientlen);
   fd_set rdst;
   char buf[1024]={0};
   while(1){
@@ -148,4 +149,108 @@ int main(int argc,char* argv[]){
         puts("%s\n",buf);
     }
   }
+```
+
+### UDP
+#### 服务器端
+> socket bind recvfrom sendto 
+udp是无连接的，不需要listen accept.只要bind端口就打开了。通过recvfrom,sendto的参数来指定信息的流向
+```c
+#include<func.h>
+  
+int main(int argc,char* argv[]){
+      int socketFd=socket(AF_INET,SOCK_DGRAM,0);
+      struct sockaddr_in addr;
+      bzero(&addr,sizeof(addr));
+      addr.sin_port=htons(atoi(argv[2]));
+      addr.sin_family=AF_INET;
+      addr.sin_addr.s_addr=inet_addr(argv[1]);
+  
+      int ret=bind(socketFd,(struct sockaddr*)&addr,sizeof(addr));
+      struct sockaddr client;
+      bzero(&client,sizeof(client));
+      char buf[1024]={0};
+  
+      socklen_t clientlen=sizeof(client);
+      recvfrom(socketFd,buf,sizeof(buf),0,(struct sockaddr*)&client,&clientlen);
+  
+      fd_set rdst;
+      while(1){
+          FD_ZERO(&rdst);
+          FD_SET(STDIN_FILENO,&rdst);
+          FD_SET(socketFd,&rdst);
+          ret=select(socketFd+1,&rdst,NULL,NULL,NULL);
+          if(ret>0){  
+              if(FD_ISSET(STDIN_FILENO,&rdst)){
+                  bzero(&buf,sizeof(buf));
+                  ret=read(STDIN_FILENO,buf,sizeof(buf)-1);
+                  if(ret==0){                                                     
+                      printf("byebye\n");
+                      break;
+  
+                  }
+                  sendto(socketFd,buf,strlen(buf)-1,0,(struct sockaddr*)&client,si
+  
+              }
+              else if(FD_ISSET(socketFd,&rdst)){
+                  bzero(&buf,sizeof(buf));
+                  ret=recvfrom(socketFd,buf,sizeof(buf),0,(struct sockaddr*)&clien
+                  if(ret==0){
+                      printf("byebye\n");
+                      break;
+  
+                  }
+                  printf("%s\n",buf);
+  
+              }
+  
+          }
+  
+      }
+      close(socketFd);
+  }         
+```
+#### 客户端
+> socket sendto recvfrom
+```c
+#include <func.h>
+
+int main(int argc,char*argv[])
+{
+    ARGS_CHECK(argc,3);
+    int socketFd=socket(AF_INET,SOCK_DGRAM,0);
+    struct sockaddr_in addr;
+    bzero(&addr,sizeof(addr));
+    addr.sin_family=AF_INET;
+    addr.sin_port=htons(atoi(argv[2]));
+    addr.sin_addr.s_addr=inet_addr(argv[1]);
+
+    char buf[1024]={0};
+    sendto(socketFd,"ni shi zhu",10,0,(struct sockaddr*)&addr,sizeof(addr));
+    
+    fd_set rdst;
+    int ret;
+    socklen_t fromlen=sizeof(struct sockaddr);                                    
+    while(1){
+        FD_ZERO(&rdst);
+        FD_SET(STDIN_FILENO,&rdst);
+        FD_SET(socketFd,&rdst);
+        ret=select(socketFd+1,&rdst,NULL,NULL,NULL);
+        if(ret>0){
+            if(FD_ISSET(STDIN_FILENO,&rdst)){
+                bzero(&buf,sizeof(buf));
+                read(STDIN_FILENO,buf,sizeof(buf));
+                sendto(socketFd,buf,strlen(buf)-1,0,(struct sockaddr*)&addr,sizeof
+            }   
+            else if(FD_ISSET(socketFd,&rdst)){
+                bzero(&buf,sizeof(buf));
+                recvfrom(socketFd,buf,sizeof(buf),0,(struct sockaddr*)&addr,&froml
+                printf("%s\n",buf);
+            } 
+
+    }
+    close(socketFd);
+    return 0;
+}
+                                                                      
 ```
